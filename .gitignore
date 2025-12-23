@@ -12,8 +12,7 @@ __pycache__/
 # ===== Logs =====
 *.log
 
-# ===== Data =====
-data/
+# ===== Data files (ignore only file types, not the folder) =====
 *.csv
 *.xlsx
 *.parquet
@@ -21,6 +20,7 @@ data/
 *.dbf
 *.shx
 *.prj
+*.fix
 
 # ===== Build =====
 dist/
