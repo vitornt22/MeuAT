@@ -1,0 +1,38 @@
+# ===== Python =====
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+
+# ===== Environment =====
+.env
+.env.*
+
+# ===== Logs =====
+*.log
+
+# ===== Data =====
+data/
+*.csv
+*.xlsx
+*.parquet
+*.shp
+*.dbf
+*.shx
+*.prj
+
+# ===== Build =====
+dist/
+build/
+*.egg-info/
+
+# ===== Coverage =====
+.coverage
+htmlcov/
+
+# ===== IDE =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

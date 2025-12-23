@@ -1,0 +1,7 @@
+# MEUAT/.dockerignore
+__pycache__
+*.pyc
+venv/
+.venv/
+.git/
+.env

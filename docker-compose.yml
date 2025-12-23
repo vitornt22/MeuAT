@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: meuat_db
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=meuat_geo
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d meuat_geo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./api
+    container_name: meuat_api
+    volumes:
+      - ./api:/app
+      - ./data:/app/data  # Mantendo os Shapefiles acessíveis para o seed
+    ports:
+      - "8004:8004"
+    environment:
+      - DATABASE_URL=postgresql://admin:password@db:5432/meuat_geo
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
