@@ -14,4 +14,4 @@ class Farm(Base):
     status = Column(String)                                   # ind_status
     type = Column(String)                                     # ind_tipo
     created_at = Column(String)                               # dat_criaca
-    geom = Column(Geometry('POLYGON', srid=4326))
+    geometry = Column(Geometry('POLYGON', srid=4326))

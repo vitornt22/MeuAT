@@ -4,7 +4,6 @@ RUN apt-get update && apt-get install -y \
 	gdal-bin libgdal-dev g++ && \
 	rm -rf /var/lib/apt/lists/*
 
-# O segredo está aqui: Define a raiz como caminho de busca do Python
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
@@ -17,4 +16,4 @@ COPY . .
 RUN chmod +x start.sh
 
 EXPOSE 8004
-CMD ["./start.sh"]
+CMD ["bash", "start.sh"]

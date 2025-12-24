@@ -2,27 +2,63 @@ services:
   db:
     image: postgis/postgis:15-3.3
     container_name: meuat_db
+    restart: always
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=meuat_geo
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d meuat_geo"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - meuat_net
+
+  seed:
+    build: ./api
+    container_name: meuat_seed
+    command: python -m scripts.seed
+    volumes:
+      - ./api:/app
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=postgresql://admin:password@db:5432/meuat_geo
+      - PYTHONPATH=/app
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - meuat_net
 
   api:
     build: ./api
     container_name: meuat_api
+    restart: unless-stopped
     volumes:
       - ./api:/app
-      - ./data:/app/data  # Mantendo os Shapefiles acessíveis para o seed
     ports:
       - "8004:8004"
     environment:
       - DATABASE_URL=postgresql://admin:password@db:5432/meuat_geo
       - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8004
     depends_on:
       db:
         condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    networks:
+      - meuat_net
+
+networks:
+  meuat_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
