@@ -15,7 +15,7 @@ class FilterParams(BaseModel):
     area_max: Optional[float] = None
     # Adding pagination with standart values
     page: int = Field(1, ge=1, description="Número da página")
-    size: int = Field(3, ge=1, le=100, description="Registros por página")
+    size: int = Field(5, ge=1, le=100, description="Registros por página")
 
 
 class PointSearch(FilterParams):

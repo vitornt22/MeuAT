@@ -13,8 +13,11 @@ router = APIRouter(prefix="/fazendas", tags=["Fazendas"])
 
 
 @router.get(
-    "/{id}", response_model=FarmResponse, summary="Obter fazenda por ID (CAR)",
-    description=descriptions.DESC_GET_BY_ID, responses=responses.FARM_BY_ID
+    "/{id}",
+    response_model=FarmResponse,
+    summary="Obter fazenda por ID (CAR)",
+    description=descriptions.DESC_GET_BY_ID,
+    responses=responses.FARM_BY_ID
 )
 def get_farm_by_id(id: str, db: Session = Depends(get_db)):
     """
@@ -108,11 +111,11 @@ def get_by_radius(payload: RadiusSearch, db: Session = Depends(get_db)):
             detail="O raio de busca deve ser um valor positivo."
         )
 
-    if payload.radius_km > 500:
+    if payload.radius_km > 1000:
         logger.warning(f"Raio excessivo: {payload.radius_km}km")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="O raio de busca máximo permitido é de 500km."
+            detail="O raio de busca máximo permitido é de 1000km."
         )
 
     if not (-90 <= payload.latitude <= 90) or not (-180 <= payload.longitude <= 180):

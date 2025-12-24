@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.constants import descriptions
 import logging
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import farms, infra
 from app.logging_config import setup_logging
@@ -18,6 +19,14 @@ app = FastAPI(
         "name": "Seu Nome",
         "url": "https://seu-portfolio.com",
     }
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Em produção, use apenas o endereço do seu front
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Including Routers

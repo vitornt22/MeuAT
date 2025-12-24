@@ -55,6 +55,22 @@ services:
         condition: service_completed_successfully
     networks:
       - meuat_net
+  frontend:
+    build: ./frontend
+    container_name: meuat_front
+    restart: unless-stopped
+    ports:
+      - "8003:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Evita que o node_modules local sobrescreva o do container
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Necessário para hot-reload funcionar bem no Docker
+      - REACT_APP_API_URL=http://localhost:8004
+    depends_on:
+      - api
+    networks:
+      - meuat_net
 
 networks:
   meuat_net:

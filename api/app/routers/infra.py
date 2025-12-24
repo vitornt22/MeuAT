@@ -6,7 +6,7 @@ from sqlalchemy import text
 from fastapi import APIRouter, Depends, HTTPException, status
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/", tags=["Infra"])
+router = APIRouter(prefix="", tags=["Infra"])
 
 # Infrastructure Endpoints  (Health e Root)
 
