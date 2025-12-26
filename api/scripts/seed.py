@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 DATA_DIR = os.getenv("DATA_PATH", "/app/data")
 FILE_NAME = "AREA_IMOVEL_1.shp"
 TABLE_NAME = "farms"
-LIMIT_ROWS = 100000  # Limit for technical test performance
+LIMIT_ROWS = 3000  # Limit for technical test performance
 
 
 def wait_for_db(retries=10, interval=3):
