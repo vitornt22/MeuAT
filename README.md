@@ -28,7 +28,7 @@ foi definido em
 LIMIT_ROWS = 3000  # Limit for technical test performance
 ```
 
-- Você pode alterar esse limite pra qualquer numero, desde que entenda que isso intefere no tempo de execução do container
+- Você pode alterar esse limite pra qualquer numero, desde que entenda que isso intefere no tempo de execução do container.
 
 ## 🚀 Como Rodar a Aplicação
 
@@ -63,6 +63,18 @@ Após a inicialização dos containers:
 - 🔌 **Backend (API FastAPI)**  
   Disponível em:  
   http://0.0.0.0:8004/
+
+### 3. Apagando dados do container para rodar novamente em caso de alguns erros
+
+Utilize os comando abaixos para aplicar uma "limpeza pesada" no docker. Dessa forma você garante que o ambiente seja destruido por completo pra que a proxima inicialização aconteça do zero.
+
+```bash
+docker compose down -v --remove-orphans
+```
+
+```bash
+docker system prune -f
+```
 
 ## Solução de Problemas: Porta 5432 ocupada
 
