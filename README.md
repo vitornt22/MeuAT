@@ -15,7 +15,7 @@ Faça o download do arquivo no link abaixo:
 
 ### 📁 Estrutura esperada
 
-![alt text](image.png)
+![alt text](screenshots/structure.png)
 
 ## ⚠️ Antes de rodar a aplicação !
 
@@ -125,3 +125,7 @@ O projeto segue uma estrutura modular para facilitar a manutenção e escalabili
 - **CI GitHub Actions**: Pipeline automatizado no GitHub Actions validando cada Push.
 - **Camada de Logic**: Separação clara entre roteamento (API) e regras de validação.
 - **Documentação Otimizada**: Swagger customizado com descrições detalhadas de cada endpoint.
+
+## Imagem da Aplicação Funcionando
+
+![alt text](screenshots/frontend.png)
