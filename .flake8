@@ -1,0 +1,17 @@
+[flake8]
+# Ignore external libraries and hidden folders
+ignore = W293
+exclude =
+    .git,
+    __pycache__,
+    venv,
+    .venv,
+    env,
+    build,
+    dist
+
+# Standard PEP8 is 79, but many modern projects use 88 or 120
+max-line-length = 127
+
+# Select errors to report (optional)
+select = E,F,W,C

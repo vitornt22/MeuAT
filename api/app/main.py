@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import farms, infra
 from app.logging_config import setup_logging
-from app.database import get_db
 
 # Setting Structured Logger
 setup_logging()

@@ -2,7 +2,7 @@ import os
 import logging
 import time
 import geopandas as gpd
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from app.logging_config import setup_logging
 from app.database import engine

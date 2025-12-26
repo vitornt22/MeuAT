@@ -43,7 +43,7 @@ def get_farm_by_id(id: str, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Falha crítica na busca por ID {id}", exc_info=True)
+        logger.error(f"Falha crítica na busca por ID {id}- \n erro: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erro interno ao processar a requisição."
@@ -75,7 +75,7 @@ def get_by_point(payload: PointSearch, db: Session = Depends(get_db)):
             f"Busca-ponto finalizada. Resultados na página: {len(results)}")
         return results
     except Exception as e:
-        logger.error("Erro inesperado no endpoint busca-ponto", exc_info=True)
+        logger.error(f"Erro inesperado no endpoint busca-ponto {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Erro interno no servidor.")
 
@@ -105,6 +105,6 @@ def get_by_radius(payload: RadiusSearch, db: Session = Depends(get_db)):
             f"Busca-raio finalizada. Resultados na página: {len(results)}")
         return results
     except Exception as e:
-        logger.error("Erro inesperado no endpoint busca-raio", exc_info=True)
+        logger.error(f"Erro inesperado no endpoint busca-raio: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Erro interno no servidor.")
