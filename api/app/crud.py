@@ -17,10 +17,12 @@ def apply_pagination(query, filters: FilterParams):
 
 
 def get_base_query(db: Session):
+    """Mandatory field to search farm"""
     return db.query(
         Farm.imovel_code, Farm.city, Farm.state_code,
         Farm.area_size, Farm.fiscal_module, Farm.status,
         Farm.type, Farm.created_at,
+        # convert spacial geometry to GeoJSON to plot
         ST_AsGeoJSON(Farm.geometry).label("geometry")
     )
 
@@ -43,7 +45,7 @@ def apply_extra_filters(query, filters: FilterParams):
 
 def format_records(results):
     """
-    Handling an Edge Case: JSON Parsing Error.
+    Transforms the gross SQLAlchemy  result into clearly and Safe API JSON
     """
     output = []
     for r in results:
@@ -61,7 +63,8 @@ def format_records(results):
 
 def get_by_id(db: Session, farm_id: str):
     try:
-        result = get_base_query(db).filter(Farm.imovel_code == farm_id).first()
+        result = get_base_query(db)
+        result = result.filter(Farm.imovel_code == farm_id).first()
         if result:
             return format_records([result])[0]
         return None
@@ -76,8 +79,11 @@ def search_by_point(db: Session, payload: PointSearch):
     It searchs farms cointaing the location specified with support for pagination filters
     """
     try:
+        # It creates a geografic point and define it as a WGS84
         pt = ST_SetSRID(ST_Point(payload.longitude, payload.latitude), 4326)
-        query = get_base_query(db).filter(ST_Contains(Farm.geometry, pt))
+        query = get_base_query(db)
+        # It check if this point is in farm geometry
+        query = query.filter(ST_Contains(Farm.geometry, pt))
 
         # Applying extra filters
         query = apply_extra_filters(query, payload)
@@ -102,7 +108,8 @@ def search_by_radius(db: Session, payload: RadiusSearch):
 
     try:
         pt = ST_SetSRID(ST_Point(payload.longitude, payload.latitude), 4326)
-        query = get_base_query(db).filter(
+        query = get_base_query(db)
+        query = query.filter(
             ST_DWithin(Farm.geometry, pt, payload.radius_km * 1000, True)
         )
 

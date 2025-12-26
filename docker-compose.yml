@@ -47,7 +47,7 @@ services:
       - DATABASE_URL=postgresql://admin:password@db:5432/meuat_geo
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8004
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8004 --reload
     depends_on:
       db:
         condition: service_healthy

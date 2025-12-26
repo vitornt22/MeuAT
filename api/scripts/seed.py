@@ -5,80 +5,103 @@ import geopandas as gpd
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from app.logging_config import setup_logging
-from app.database import engine  # Ele usará a engine configurada no app
+from app.database import engine
 
-# Logs Settings
+# Initialize structured logging
 setup_logging()
 logger = logging.getLogger(__name__)
 
+# Constants for file paths and limits
+# Note: The 'data' folder is at the root, mapped to /app/data in Docker
+DATA_DIR = os.getenv("DATA_PATH", "/app/data")
+FILE_NAME = "AREA_IMOVEL_1.shp"
+TABLE_NAME = "farms"
+LIMIT_ROWS = 3000  # Limit for technical test performance
+
 
 def wait_for_db(retries=10, interval=3):
-    """It waits the database to be ready"""
+    """Wait for the database to become available and healthy."""
+    logger.info("Verificando conexão com o banco de dados...")
     for i in range(retries):
         try:
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
                 return True
         except Exception:
-            logger.warning(f"Aguardando banco de dados... ({i+1}/{retries})")
+            logger.warning(
+                f"Banco de dados não está pronto... ({i+1}/{retries})")
             time.sleep(interval)
     return False
 
 
-def create_indexes_and_constraints():
-    """Otimization: Primary Keys and Spacial Indexes"""
-    logger.info("--- Iniciando Otimização: PK e Índices ---")
+def is_db_populated():
+    """Check if the table exists and already contains data."""
+    try:
+        with engine.connect() as conn:
+            # Check if table 'farms' exists and has rows
+            query = text(f"SELECT COUNT(*) FROM {TABLE_NAME}")
+            result = conn.execute(query)
+            count = result.scalar()
+            return count > 0
+    except Exception:
+        # Table probably doesn't exist yet
+        return False
+
+
+def create_indexes():
+    """Create Spatial (GIST) and B-Tree indexes for performance."""
+    logger.info("Criando chaves primárias e índices espaciais...")
     with engine.connect() as conn:
         try:
-            # Primary Key
+            # Primary Key (Unique CAR ID)
             conn.execute(
-                text("ALTER TABLE farms ADD PRIMARY KEY (imovel_code);"))
-            # Spacial Index(GiST)
+                text(f"ALTER TABLE {TABLE_NAME} ADD PRIMARY KEY (imovel_code);"))
+            # Spatial Index for Geo queries
             conn.execute(text(
-                "CREATE INDEX IF NOT EXISTS idx_farms_geom ON farms USING GIST (geometry);"))
-            # Text Index
+                f"CREATE INDEX IF NOT EXISTS idx_geom ON {TABLE_NAME} USING GIST (geometry);"))
+            # City index for text search
             conn.execute(
-                text("CREATE INDEX IF NOT EXISTS idx_farms_city ON farms (city);"))
+                text(f"CREATE INDEX IF NOT EXISTS idx_city ON {TABLE_NAME} (city);"))
             conn.commit()
-            logger.info("PK e Índices criados com sucesso!")
+            logger.info("Otimização: Índices criados com sucesso.")
         except SQLAlchemyError as e:
-            logger.error(f"Erro ao criar índices: {e}")
+            logger.error(f"Falha ao criar índices: {e}")
             conn.rollback()
 
 
 def run_seed():
-    # Fallback to local execution if enviromment don't have a variable
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url:
-        logger.warning("DATABASE_URL não encontrada. Usando padrão local.")
-        # If it executes locally, it will try the localhost
-        os.environ["DATABASE_URL"] = "postgresql://admin:password@localhost:5432/meuat_geo"
-
+    """Main execution flow for seeding the database."""
     if not wait_for_db():
-        logger.error("Falha ao conectar no banco de dados. Abortando.")
+        logger.error(
+            "Não foi possível conectar ao banco de dados. Abortando seed.")
         return
 
-    # Egde Case: verify possible paths
-    possible_paths = ["data/AREA_IMOVEL_1.shp",
-                      "/app/data/AREA_IMOVEL_1.shp", "../data/AREA_IMOVEL_1.shp"]
-    shapefile_path = next(
-        (p for p in possible_paths if os.path.exists(p)), None)
+    # REQUIREMENT: Only execute once
+    if is_db_populated():
+        logger.info(
+            "O banco de dados já está populado. Pulando o processo de seed.")
+        return
 
-    if not shapefile_path:
-        logger.error(
-            "Shapefile não encontrado em nenhum dos caminhos esperados.")
+    # Support multiple extensions for flexibility (GeoJSON or Shapefile)
+    file_path = os.path.join(DATA_DIR, FILE_NAME)
+
+    if not os.path.exists(file_path):
+        logger.error(f"Arquivo não encontrado em: {file_path}")
         return
 
     try:
-        logger.info(f"--- Lendo Shapefile de: {shapefile_path} ---")
-        df = gpd.read_file(shapefile_path, rows=3000)
+        logger.info(f"Carregando dados de: {file_path}")
+        # GeoPandas handles the .shp/.dbf/.shx cluster automatically
+        df = gpd.read_file(file_path, rows=LIMIT_ROWS)
 
         if df.empty:
-            logger.warning("O arquivo Shapefile está vazio.")
+            logger.warning("O arquivo de entrada está vazio.")
             return
 
+        # Transform to WGS84 (Standard for Web/Leaflet)
         df = df.to_crs(epsg=4326)
 
+        # Map internal CAR names to our API Schema
         column_mapping = {
             'cod_imovel': 'imovel_code',
             'municipio': 'city',
@@ -91,22 +114,26 @@ def run_seed():
             'geometry': 'geometry'
         }
 
-        # It filters only what exists in the file to avoid KeyError
+        # Filter only available columns
         existing_cols = {k: v for k,
                          v in column_mapping.items() if k in df.columns}
+        # Renaming columns to english
         df = df[list(existing_cols.keys())].rename(columns=existing_cols)
-
+        # Removing duplicates
         df = df.drop_duplicates(subset=['imovel_code'])
 
-        logger.info(f"Gravando {len(df)} registros no PostGIS...")
-        # if_exists="replace" recreates the table. index=False avoid extra ID column
-        df.to_postgis("farms", engine, if_exists="replace", index=False)
+        logger.info(f"Ingerindo {len(df)} registros no PostGIS...")
+        # Write to database
+        df.to_postgis(TABLE_NAME, engine, if_exists="replace", index=False)
 
-        create_indexes_and_constraints()
-        logger.info("Seed finalizado com sucesso!")
+        # Add indexes after ingestion for faster writes
+        create_indexes()
+
+        logger.info("Processo de seed finalizado com sucesso!")
 
     except Exception as e:
-        logger.critical(f"Falha no Seed: {str(e)}")
+        logger.critical(
+            f"Falha crítica durante o seed: {str(e)}", exc_info=True)
 
 
 if __name__ == "__main__":

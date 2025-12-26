@@ -4,6 +4,7 @@ from typing import Optional, List, Any
 # GeoJSON Structure for Swagger documentation
 
 
+# WKT - Well-Know Text - Textual Format
 class GeoJSONModel(BaseModel):
     type: str  # e.g., "Polygon" or "Point"
     coordinates: List[Any]
@@ -24,7 +25,7 @@ class PointSearch(FilterParams):
 
 
 class RadiusSearch(PointSearch):
-    radius_km: float = Field(..., alias="radius_km")
+    radius_km: float = Field(..., alias="raio_km")
     # It allows pydantic recognize both inner name and the alias
     model_config = ConfigDict(populate_by_name=True)
 
