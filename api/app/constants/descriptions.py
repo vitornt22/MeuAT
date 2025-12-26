@@ -32,4 +32,4 @@ INITIAL_DESCRIPTION = """
     * **Health Check**: Monitoramento de saúde da API e Banco de Dados.
     
     **Diferenciais Técnicos:** Paginação, Logs estruturados e Índices Espaciais.
-    """,
+    """
